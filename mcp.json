@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "mcp-postgres-server": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp[cli]",
+        "mcp",
+        "run",
+        "/Users/hamalawy/github/mobile scanner/pgmcp.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "Demo": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp[cli]",
+        "mcp",
+        "run",
+        "/Users/hamalawy/github/mobile scanner/main.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    }
+  }
+}
