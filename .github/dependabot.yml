@@ -1,0 +1,43 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    commit-message:
+      prefix: "chore(deps):"
+    pull-request-branch-name:
+      separator: "/"
+    labels:
+      - dependencies
+      - python
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    commit-message:
+      prefix: "chore(deps):"
+    pull-request-branch-name:
+      separator: "/"
+    labels:
+      - dependencies
+      - github-actions
+
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    commit-message:
+      prefix: "chore(deps):"
+    pull-request-branch-name:
+      separator: "/"
+    labels:
+      - dependencies
+      - docker

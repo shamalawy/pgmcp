@@ -1,0 +1,59 @@
+
+services:
+  # PostgreSQL 17 database with fixture data
+  pgmcp_postgres:
+    image: postgres:17
+    container_name: pgmcp_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pgmcp_demo
+    ports:
+      # Published on 5433 so the stack does not collide with a PostgreSQL
+      # already listening on the host's 5432. pgmcp reaches it over the compose
+      # network on 5432 regardless; this mapping is only for your own psql.
+      - "5433:5432"
+    volumes:
+      # Named volume for persistent data
+      - pgmcp_postgres_data:/var/lib/postgresql/data
+      # Mount fixture seed script
+      - ./tests/fixtures/seed.sql:/docker-entrypoint-initdb.d/01-seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # For production, change image tag to a specific version (e.g. postgres:17.2)
+    # For production, remove ports or restrict access to pgmcp service only
+    # For production, use a secret manager for POSTGRES_PASSWORD instead of plain text
+
+  # pgmcp MCP server
+  pgmcp_server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pgmcp_server
+    environment:
+      PGMCP_DSN: postgresql://postgres:postgres@pgmcp_postgres:5432/pgmcp_demo
+      # read-only (the default) or write. "write" lets a model change this database.
+      PGMCP_ACCESS_MODE: read-only
+      PGMCP_TRANSPORT: streamable-http
+      # 0.0.0.0 so the endpoint is reachable from outside the container.
+      PGMCP_HOST: 0.0.0.0
+      PGMCP_PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      pgmcp_postgres:
+        condition: service_healthy
+    # For production:
+    # - Use pgmcp_postgres:5432 in DSN (service hostname within compose network)
+    # - Set PGMCP_ACCESS_MODE to read-only (default) or write with caution
+    # - Connect an MCP client to http://pgmcp_server:8000 or http://localhost:8000
+    # - Restrict PGMCP_ALLOWED_SCHEMAS to minimize blast radius
+    # - Run as read-only PostgreSQL role (see SECURITY.md)
+    # - Do not expose port 8000 to untrusted networks
+
+volumes:
+  pgmcp_postgres_data:
+    # For production, use a proper volume driver or backup strategy

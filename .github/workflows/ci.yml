@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint & Type
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          cache: false
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install dependencies
+        run: uv sync --frozen
+      - name: Ruff lint
+        run: uv run ruff check .
+      - name: Ruff format
+        run: uv run ruff format --check .
+      - name: mypy
+        run: uv run mypy
+
+  test:
+    name: Test on Python ${{ matrix.python-version }} with PostgreSQL ${{ matrix.postgres-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+        postgres-version: ['17']
+        include:
+          # Test against older PostgreSQL versions on one Python version
+          - python-version: '3.12'
+            postgres-version: '14'
+          - python-version: '3.12'
+            postgres-version: '16'
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres-version }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pgmcp_demo
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          cache: true
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --frozen
+      # The service container boots before actions/checkout runs, so the fixture
+      # cannot be mounted into /docker-entrypoint-initdb.d - it does not exist
+      # yet. Seed explicitly here instead.
+      - name: Seed the fixture database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends postgresql-client
+          psql -h localhost -U postgres -d pgmcp_demo -v ON_ERROR_STOP=1 -q \
+            -f tests/fixtures/seed.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -q \
+            -c 'CREATE DATABASE pgmcp_write'
+      - name: Run tests with coverage
+        env:
+          PGMCP_TEST_DSN: postgresql://postgres:postgres@localhost:5432/pgmcp_demo
+          PGMCP_WRITE_TEST_DSN: postgresql://postgres:postgres@localhost:5432/pgmcp_write
+        run: uv run pytest --cov=src/pgmcp --cov-report=xml --cov-report=html
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}-pg${{ matrix.postgres-version }}
+          path: htmlcov/
+          retention-days: 7

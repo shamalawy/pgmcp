@@ -1,0 +1,92 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the form below to help us investigate.
+  - type: input
+    id: pgmcp-version
+    attributes:
+      label: pgmcp version
+      description: Output of `pgmcp --version`
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: postgres-version
+    attributes:
+      label: PostgreSQL version
+      description: Output of `psql --version`
+      placeholder: "PostgreSQL 17.0"
+    validations:
+      required: true
+  - type: input
+    id: mcp-client
+    attributes:
+      label: MCP Client
+      description: Which MCP client are you using? (e.g., Claude Desktop, Continue, etc.)
+      placeholder: "Claude Desktop"
+    validations:
+      required: true
+  - type: dropdown
+    id: access-mode
+    attributes:
+      label: Access Mode
+      description: Which access mode are you running?
+      options:
+        - read
+        - write
+    validations:
+      required: true
+  - type: input
+    id: allowed-schemas
+    attributes:
+      label: Allowed Schemas
+      description: Output of `pgmcp --allowed-schemas` or environment variable value (redact credentials)
+      placeholder: "public, analytics"
+  - type: textarea
+    id: dsn
+    attributes:
+      label: Database Connection
+      description: Connection string with credentials redacted
+      placeholder: "postgresql://user:***@localhost/pgmcp_demo"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Clear steps to reproduce the bug
+      placeholder: |
+        1. Start pgmcp with ...
+        2. Query ...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or Error Output
+      description: Any relevant error messages or logs (redact credentials)
+      render: text
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context about the bug?
