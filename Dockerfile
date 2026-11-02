@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 WORKDIR /build
 
@@ -17,7 +17,7 @@ RUN uv venv /opt/venv --python /usr/local/bin/python3
 RUN UV_PROJECT_ENVIRONMENT=/opt/venv uv sync --frozen --no-dev
 
 # Runtime stage
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
